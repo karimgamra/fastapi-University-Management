@@ -6,6 +6,7 @@ from app.models.user import UserLogin , UserCreate , UserUpdate , StudentCreate
 from app.core.security import verify_password , get_current_user , hash_password
 from app.api.v1.auth import create_token
 from app.database import Base ,engine
+from app.utils.email import send_email
 
 # Base.metadata.drop_all(bind=engine)
 Base.metadata.create_all(bind=engine)
@@ -24,7 +25,18 @@ async def login (user :UserLogin , db:Session = Depends(get_db)) :
     
         raise HTTPException(status_code=404 , detail="password not correct try again")
     token = create_token({"email":db_user.email})
+        # Send welcome email
+    try:
+        send_email(
+            to_email=db_user.email,
+            subject="Welcome back to the app!",
+            body=f"Hello {db_user.name},\n\nWelcome back! We're glad to see you again."
+        )
+    except Exception as e:
+        print("Email failed:", str(e))  # optional logging
+
     return {"access_token": token, "token_type": "bearer"}
+
 
         
     
@@ -54,12 +66,7 @@ async def create_user (user:UserCreate , db:Session = Depends(get_db) , current_
     return new_user
 
 
-# @router.get("/user/{user_id}")
-# async def get_user_by_id (user_id :int , db:Session = Depends(get_db)) :
-#     user = db.query(User).filter(User.id == user_id).first()
-#     if not user :
-#         raise HTTPException(status_code=404 ,detail="user not found")
-#     return user
+
     
     
 @router.post("/student")
