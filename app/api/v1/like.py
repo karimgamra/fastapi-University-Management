@@ -195,9 +195,8 @@ async def get_top_post (days :int = 7 , limit : int = 3 , offset :int =0 , db:Se
                 "title" : post.title,
                 "likes" : post.Likes,
                }
-                for post in posts       
-        ]
-
+                for post in posts   ]
+        
 
 
 @router.get("")
