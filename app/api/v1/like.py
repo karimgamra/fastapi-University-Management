@@ -1,5 +1,6 @@
-import datetime
+from datetime import datetime , timedelta
 from fastapi import APIRouter , Depends , HTTPException
+from sqlalchemy import func
 from app.core.security import get_current_user
 from app.schemas.user import Post , User , Like
 from sqlalchemy.orm import Session
@@ -152,19 +153,17 @@ async def get_post_likes (post_id : int ,  db:Session = Depends(get_db)) :
                 raise HTTPException(status_code=403 , detail="Post Not Found")
         
         likes = (
-        db.query(Like)
-        .filter(Like.post_id == post_id)
-        .all()
-                 )
-
+                db.query(Like)
+                .filter(Like.post_id == post_id)
+                .all()
+        )
         user_infos = (
-        db.query(User.id, User.name)
-        .join(Like, Like.user_id == User.id)
-        .filter(Like.post_id == post_id)
-        .all()
-                )
-        
-        
+                db.query(User.id, User.name)
+                .join(Like, Like.user_id == User.id)
+                .filter(Like.post_id == post_id)
+                .all()
+        )
+
         return {
                 "post_id" : post_id ,
                 "total_liked" : len(likes) ,
@@ -172,4 +171,35 @@ async def get_post_likes (post_id : int ,  db:Session = Depends(get_db)) :
         }
         
 
-        
+@router.get("/posts/most-liked")
+async def get_top_post (days :int = 7 , limit : int = 3 , offset :int =0 , db:Session = Depends(get_db)) :
+
+        time_threshold = datetime.utcnow() - timedelta(days=days)
+        posts = (
+              db.query(
+                      Post.id.label("Post_id"),
+                      Post.title,
+                      func.count(Like.id).label("Likes")
+                )
+                .join(Like , Post.id == Like.post_id)
+                .filter(Like.created_at >= time_threshold)
+                .group_by(Post.id , Post.title)
+                .order_by(func.count(Like.id).desc())
+                .offset(offset)
+                .limit(limit)
+                .all()
+        )
+        return [
+               {
+                "post_id" : post.Post_id,
+                "title" : post.title,
+                "likes" : post.Likes,
+               }
+                for post in posts       
+        ]
+
+
+
+@router.get("")
+def new_task () :
+        pass

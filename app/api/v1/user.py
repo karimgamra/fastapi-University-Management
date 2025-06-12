@@ -20,12 +20,13 @@ async def login (user :UserLogin , db:Session = Depends(get_db)) :
     db_user = db.query(User).filter(User.email == user.email).first()
     
     if not db_user :
-        raise HTTPException(status_code=404 , detail="User not found")
+            raise HTTPException(status_code=404 , detail="User not found")
+
     if not verify_password(user.password , db_user.password) :
+            raise HTTPException(status_code=404 , detail="password not correct try again")
     
-        raise HTTPException(status_code=404 , detail="password not correct try again")
     token = create_token({"email":db_user.email})
-        # Send welcome email
+        
     try:
         send_email(
             to_email=db_user.email,
@@ -33,7 +34,7 @@ async def login (user :UserLogin , db:Session = Depends(get_db)) :
             body=f"Hello {db_user.name},\n\nWelcome back! We're glad to see you again."
         )
     except Exception as e:
-        print("Email failed:", str(e))  # optional logging
+        print("Email failed:", str(e)) 
 
     return {"access_token": token, "token_type": "bearer"}
 
@@ -66,9 +67,6 @@ async def create_user (user:UserCreate , db:Session = Depends(get_db) , current_
     return new_user
 
 
-
-    
-    
 @router.post("/student")
 async def create_student(student_id : int , student:StudentCreate , db : Session = Depends(get_db) , current_user :User = Depends(get_current_user)) :
     if current_user.role != "admin" :
