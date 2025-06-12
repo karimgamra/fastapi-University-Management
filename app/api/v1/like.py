@@ -171,6 +171,5 @@ async def get_post_likes (post_id : int ,  db:Session = Depends(get_db)) :
                 "liked by users" :[{'user_id' : uid , "name" :name } for uid , name in user_infos]        
         }
         
-        
-        
+
         
