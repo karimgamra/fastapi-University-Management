@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Date, ForeignKey, DateTime, UniqueConstraint, func
+from sqlalchemy import Column, Integer, String, Date, ForeignKey, DateTime, Text, UniqueConstraint, func
 from sqlalchemy.orm import relationship
 from app.database import Base
 from datetime import datetime
@@ -93,3 +93,28 @@ class Like(Base):
     __table_args__ = (
         UniqueConstraint("user_id", "post_id", name="unique_user_post_like"),
     )
+
+
+class Course (Base) :
+    __tablename__ = "courses" 
+    
+    id = Column (Integer ,primary_key=True)
+    name = Column(String , nullable=False)
+    description = Column(Text)
+    teacher_id = Column(Integer ,  ForeignKey("users.id",ondelete="CASCADE"))
+    enrolled_at = Column (DateTime , default=datetime.utcnow())
+    teacher = relationship("User" , backref="courses")
+    enrolled = relationship("Enrollment" , back_populates="courses" , cascade= "all ,delete" ,passive_deletes=True)
+    
+    
+class Enrollment (Base) :
+    __tablename__ = "enrollment"
+    
+    id = Column (Integer , primary_key=True)
+    student_id = Column(Integer , ForeignKey("users.id",ondelete="CASCADE"))
+    course_id = Column (Integer , ForeignKey("courses.id",ondelete="CASCADE"))
+    enrollment_at = Column (DateTime ,default=datetime.utcnow())
+    student = relationship("User", backref="enrollments")
+    course = relationship("Course", back_populates="enrollments")
+
+    
